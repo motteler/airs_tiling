@@ -1,0 +1,54 @@
+#
+# ccast git ignore
+#
+
+# data & misc
+*.h5
+*.hdf
+*.mat
+*.log
+*.core
+*.dat
+*.nc
+
+# tex & docs
+*.aux
+*.toc
+*.snm
+*.nav
+*.out
+*.vrb
+*.bbl
+*.blg
+*.pdf
+*.png
+*.fig
+
+# archives and packages
+*.gz
+*.tgz
+*.tar
+*.zip
+*.bz2
+
+# libs and object files
+*.a
+*.o
+*.so
+*.mexa64
+
+# backup files
+*.svn
+*.bak
+*~
+
+# NFS junk
+.nfs*
+
+# temp files
+*.tmp
+
+# msc directories
+zold
+*logs*
+*tmp
