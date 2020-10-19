@@ -32,6 +32,17 @@ variables:
 		string lon:units = "degrees_east" ;
 		string lon:description = "longitude of FOV center" ;
 		string lon:AIRS_HDF_name = "Longitude" ;
+	float land_frac(obs) ;
+		land_frac:valid_range = 0.f, 1.f ;
+		string land_frac:long_name = "land fraction" ;
+		string land_frac:coordinates = "lon lat" ;
+		land_frac:_FillValue = 9.96921e+36f ;
+		string land_frac:coverage_content_type = "referenceInformation" ;
+		string land_frac:standard_name = "land_area_fraction" ;
+		string land_frac:units = "1" ;
+		string land_frac:description = "land fraction over the FOV" ;
+		string land_frac:AIRS_HDF_name = "landFrac" ;
+		string land_frac:cell_methods = "area: mean (beam-weighted)" ;
 	float sol_zen(obs) ;
 		sol_zen:valid_range = 0.f, 180.f ;
 		string sol_zen:long_name = "solar zenith angle" ;

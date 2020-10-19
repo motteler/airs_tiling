@@ -3,13 +3,13 @@
 #
 
 # data & misc
+*.nc
 *.h5
 *.hdf
 *.mat
 *.log
 *.core
 *.dat
-*.nc
 
 # tex & docs
 *.aux
@@ -48,7 +48,8 @@
 # temp files
 *.tmp
 
-# msc directories
+# skip these...
 zold
 *logs*
 *tmp
+

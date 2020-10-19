@@ -1,20 +1,20 @@
 %
 % NAME
-%   airsL1c2tile - take AIRS SDRs to map tables
+%   airsL1c2buf - AIRS buffered tiling main function
 %
 % SYNOPSIS
-%   airsL1c2tile(year, iset, odir)
+%   airsL1c2buf(year, iset, thome)
 %
 % INPUTS
 %   year   - integer year
 %   iset   - 16-day set number (1-23)
-%   odir  -  output tree home
+%   thome  - output tree home
 %
 % AUTHOR
 %   H. Motteler, 10 Oct 2020
 %
 
-function airsL1c2tile(year, iset, odir)
+function airsL1c2buf(year, iset, thome)
 
 % this function name
 fstr = mfilename;  
@@ -22,13 +22,11 @@ fstr = mfilename;
 % set up source paths
 addpath /home/motteler/shome/chirp_test
 addpath /home/motteler/cris/ccast/motmsc/utils
+addpath /home/motteler/cris/ccast/motmsc/time
 addpath /home/motteler/cris/ccast/source
 
 % initial empty netCDF file
 nc_init = './airs_tile.nc';
-
-% tile home directory
-tile_home = '/asl/lustre/airs/tile_test2';
 
 % get latitude bands
 % dLat = 3;
@@ -98,6 +96,7 @@ for di = dlist
     sat_zen = d2.sat_zen(iOK,1);
     sol_zen = d2.sol_zen(iOK,1);
     asc_flag = d2.asc_flag(iOK,1);
+    land_frac = d2.land_frac(iOK,1);
 
 %   % old latitude subsample
 %   nxt = length(ixt);
@@ -113,13 +112,13 @@ for di = dlist
     for j = 1 : nobs
 
       write_buf(ilat(j), ilon(j), nlat, nlon, nchan, ...
-        latB, lonB, year, iset, do_init, tile_home, nc_init, ...
-        rad(:,j), tai93(j), lat(j), lon(j), ...
-        sat_zen(j), sol_zen(j), asc_flag(j))
+        latB, lonB, year, iset, do_init, thome, nc_init, ...
+        j, rad(:,j), tai93(j), lat(j), lon(j), ...
+        sat_zen(j), sol_zen(j), asc_flag(j), land_frac(j))
 
       do_init = false;
 
-      pause(0.1);  %********* temporary ********
+%     pause(0.1);  %** temporary ** 
 
     end % loop on obs
 

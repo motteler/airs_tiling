@@ -1,6 +1,6 @@
 %
 % NAME
-%   airsL1c2tile - take AIRS SDRs to map tables
+%   airsL1c2tile - AIRS basic unbuffered tiling
 %
 % SYNOPSIS
 %   airsL1c2tile(year, iset, odir)

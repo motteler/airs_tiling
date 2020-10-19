@@ -1,0 +1,58 @@
+
+Overview
+=========
+
+airs_tiling is a package to rearrange AIRS L1c obs from a global
+sequential format to a global tiling, in which each tile has all the
+sequential obs that fall within its boundaries, organized in 16-day
+sets.  It also includes functions to do mapped 16-day statistical
+summaries.
+
+Source Repos
+-------------
+
+https://github.com/motteler/airs_tiling.git
+https://github.com/motteler/chirp_test.git
+https://github.com/strow/ccast.git
+
+
+Main Files
+============
+
+AIRS tiling
+------------
+  airsL1c2buf  - AIRS buffered tiling main function
+  tile_file    - name and path for tile files
+  write_buf    - buffered write for tiles
+
+16-day stats
+-------------
+  airs_sdr2tab    - take AIRS SDRs to map tables
+  airs_sdr2obs    - obs lists from AIRS L1c subsets
+  airs_sdr_batch  - batch wrapper for airs_sdr2tab and airs_sdr2obs
+
+test and support
+-----------------
+  airsL1c2tile - AIRS unbuffered tiling main function
+
+
+Notes
+======
+
+netCDF notes
+-------------
+Starting from an existing netCDF file, you can dump the CDL format
+spec, edit it extensively, add or delete variables, write an empty
+netCDF file from the CDL spec, and write data to the netCDF file.
+This is convenient for managing relatively complex formats.  Some
+examples:
+
+ - chirp initial netCDF file from a CDL spec
+     ncgen -o airs_tile.nc airs_tile.cdl
+
+ - CDL spec extrated from a netCDF file
+      ncdump -h uw_sdr_test.nc > uw_sdr_test.cdl
+
+ - initial netcdf file from a CDL spec
+      ncgen -o ncgen_test.nc uw_sdr_test.cdl
+
