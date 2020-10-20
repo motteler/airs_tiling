@@ -21,11 +21,11 @@ lonB = -180 : dLon : 180;
 nlon = length(lonB) - 1;
 
 % buffered tests
-  thome = '/asl/lustre/airs/tile_test5'
+  thome = '/asl/lustre/airs/tile_test2'
   year = 2018;
   tpre = 'tile';
   iset = 8;  % full data set
-  nobs = 8900;
+  nobs = 2400;
 % iset = 7;  % just lat, lon, and time (but done)
 % nobs = 10000;
 

@@ -33,10 +33,10 @@ function write_buf(ilat, ilon, nlat, nlon, nchan, ...
   obs, rad, tai93, lat, lon, sat_zen, sol_zen, asc_flag, land_frac)
 
 % number of buffers
-nbuf = 4;
+nbuf = 120;
 
 % buffer size
-bmax = 4; 
+bmax = 240; 
 
 %-----------------------------
 % set up persistent variables
@@ -52,14 +52,14 @@ if do_init
   fprintf(1, 'initializing buffers\n')
 
   % tile data buffers
-  rad_b     = single(zeros(nchan, bmax));
-  tai93_b   = zeros(bmax, 1);
-  lat_b     = single(zeros(bmax, 1));
-  lon_b     = single(zeros(bmax, 1));
-  sat_zen_b = single(zeros(bmax, 1));
-  sol_zen_b = single(zeros(bmax, 1));
-  asc_flag_b = uint8(zeros(bmax, 1));
-  land_frac_b = single(zeros(bmax, 1));
+  rad_b     = single(zeros(nchan, bmax, nbuf));
+  tai93_b   = zeros(bmax, nbuf);
+  lat_b     = single(zeros(bmax, nbuf));
+  lon_b     = single(zeros(bmax, nbuf));
+  sat_zen_b = single(zeros(bmax, nbuf));
+  sol_zen_b = single(zeros(bmax, nbuf));
+  asc_flag_b = uint8(zeros(bmax, nbuf));
+  land_frac_b = single(zeros(bmax, nbuf));
 
   % pointers and counters
   tile_buf = zeros(nlat, nlon);    % buffers pointers
@@ -149,18 +149,20 @@ buf_cnt(buf_id) = buf_cnt(buf_id) + 1;
 j = buf_cnt(buf_id);
 
 % write to the buffers
-rad_b(:,j)   = rad;
-tai93_b(j)   = tai93;
-lat_b(j)     = lat;
-lon_b(j)     = lon;
-sat_zen_b(j) = sat_zen;
-sol_zen_b(j) = sol_zen;
-asc_flag_b(j) = asc_flag;
-land_frac_b(j) = land_frac;
+rad_b(:,j, buf_id)     = rad;
+tai93_b(j, buf_id)     = tai93;
+lat_b(j, buf_id)       = lat;
+lon_b(j, buf_id)       = lon;
+sat_zen_b(j, buf_id)   = sat_zen;
+sol_zen_b(j, buf_id)   = sol_zen;
+asc_flag_b(j, buf_id)  = asc_flag;
+land_frac_b(j, buf_id) = land_frac;
  
-% age the buffers
-ix = buf_cnt > 0;  % index of non-empty buffers
+% age the buffers; increment buf_age for all non-empty buffers
+% and set age for the current buffer to zero
+ix = buf_cnt > 0;
 buf_age(ix) = buf_age(ix) + 1;
+buf_age(buf_id) = 0;
 
 % buffer sanity check
 buffer_check
@@ -232,7 +234,7 @@ fprintf(1, 'writing %d values from buffer %d to tile %d %d\n', ...
 % buffer sanity check
 dLon = lonB(2)-lonB(1);
 for j = jx
-  [ilat2, ilon2] = tile_index(latB, dLon, lat_b(j), lon_b(j));
+  [ilat2, ilon2] = tile_index(latB, dLon, lat_b(j, iout), lon_b(j, iout));
   if ilat2 ~= jlat | ilon2 ~= jlon
     fprintf(1, 'lat/lon mismatch on file write\n')
     fprintf(1, 'tile: %.2f %.2f  buffer %.2f %.2f\n', ...
@@ -243,14 +245,14 @@ end
 
 if exist(tfull) ~= 2, keyboard, end   % ****** test test test *****
 
-  h5write(tfull, '/rad', rad_b(:,jx), [1,istart], [nchan,icount]);
-  h5write(tfull, '/tai93', tai93_b(jx), istart, icount);
-  h5write(tfull, '/lat',   lat_b(jx),   istart, icount);
-  h5write(tfull, '/lon',   lon_b(jx),   istart, icount);
-  h5write(tfull, '/sat_zen', sat_zen_b(jx), istart, icount);
-  h5write(tfull, '/sol_zen', sol_zen_b(jx), istart, icount);
-  h5write(tfull, '/asc_flag', uint8(asc_flag_b(jx)), istart, icount);
-  h5write(tfull, '/land_frac', land_frac_b(jx), istart, icount);
+  h5write(tfull, '/rad', rad_b(:,jx, iout), [1,istart], [nchan,icount]);
+  h5write(tfull, '/tai93',    tai93_b(jx, iout),   istart, icount);
+  h5write(tfull, '/lat',      lat_b(jx, iout),     istart, icount);
+  h5write(tfull, '/lon',      lon_b(jx, iout),     istart, icount);
+  h5write(tfull, '/sat_zen',  sat_zen_b(jx, iout), istart, icount);
+  h5write(tfull, '/sol_zen',  sol_zen_b(jx, iout), istart, icount);
+  h5write(tfull, '/asc_flag', uint8(asc_flag_b(jx, iout)), istart, icount);
+  h5write(tfull, '/land_frac', land_frac_b(jx, iout), istart, icount);
 
 % reset the buffer count and age
 buf_cnt(iout) = 0;
