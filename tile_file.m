@@ -3,14 +3,13 @@
 %   tile_file - name and path for tile files
 %
 % SYNOPSIS
-%   [tname, tpath] = tile_file(ilat, ilon, latB, lonB, year, iset, tpre)
+%   [tname, tpath] = tile_file(ilat, ilon, latB, lonB, iset, tpre)
 %
 % INPUTS
 %   ilat  - latitude index, range 1 to m
 %   ilon  - longitude index, range 1 to n
 %   latB  - m+1 vector, latitude tile boundaries
 %   lonB  - n+1 vector, longitude tile boundaries
-%   year  - integer year
 %   iset  - integer set index (1-23)
 %   tpre  - optional file prefex, default is "tile"
 %
@@ -19,16 +18,17 @@
 %   tname - tile filename
 %
 % FILENAME FORMAT
-%   lat and lon values are discretized in steps of 0.25 degrees
-%   for the semi-Mercator (SM) grid.  lat and lon filename fields
-%   are of the form XNNpNN_YNNNpNN, in hundredths of a degree, and
-%   are zero-filled.  So for example the tile file for ilat 20, ilon
-%   25, set 16, year 2018 would be tile_2018_s09_S35p75_W060p00.nc
-%   The default prefix "tile" can be changed with the optional input
-%   field tpre.
+%   lat and lon filename fields are of the form CNNpNN_CNNNpNN,
+%   where C is a compass point (N, S, E, W) and N are decimal
+%   digits.  So for example the tile file for ilat 23, ilon 40,
+%   set 31, would be tile_2003_s031_S27p50_E015p00.nc.  The 16-day
+%   sets are numbered starting at 1 Sep 2002.  lat and lon values
+%   are discretized in steps of 0.25 degrees for the semi-Mercator
+%   (SM) grid.  The default prefix "tile" can be changed with the
+%   optional input field tpre.
 %
-%   The tile path tpath has the form YYYY/setNN/XNNpNN, year, 16-day
-%   set, and latitude directory name, for example 2018/set09/S35p75.
+%   The tile path tpath has the form YYYY_sNNN/CNNpNN, year, 16-day
+%   set, and latitude directory name, for example 2003_s031_S27p50.
 %   The latitude directory name matches the filename latitude field.
 %
 %   filename lat/lon fields are the lower bounds for the associated
@@ -36,12 +36,17 @@
 %
 
 function [tname, tpath] = ...
-  tile_file(ilat, ilon, latB, lonB, year, iset, tpre)
+  tile_file(ilat, ilon, latB, lonB, iset, tpre)
 
 % default tile file prefix
-if nargin == 6
+if nargin == 5
   tpre = 'tile';
 end
+
+% get year for this set
+dlist = set2dlist(iset);
+dvec = datevec(dlist(1));
+year = dvec(1);
 
 if ~(1 <= ilat & ilat < length(latB))
   error(sprintf('ilat value %d out of range', ilat))
@@ -70,8 +75,8 @@ lon_str = strrep(lon_str, '.', 'p');
 % lon_str = strrep(lon_str, '-', 'm');
 % lon_str = strrep(lon_str, '.', 'p');
 
-tname = sprintf('%s_%d_s%02d_%s_%s.nc', ...
+tname = sprintf('%s_%d_s%03d_%s_%s.nc', ...
           tpre, year, iset, lat_str, lon_str);
 
-tpath = sprintf('%d/set%02d/%s', year, iset, lat_str);
+tpath = sprintf('%d_s%03d/%s', year, iset, lat_str);
 

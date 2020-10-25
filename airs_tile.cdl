@@ -122,4 +122,9 @@ variables:
 		string wnum:description = "wavenumber" ;
 		wnum:_FillValue = 9.96920996838687e+36 ;
 		string wnum:coverage_content_type = "auxiliaryInformation" ;
+
+        int total_obs ;
+                string total_obs:long_name = "total obs for this tile" ;
+                string total_obs:description = "total obs for this tile" ;
+                total_obs:_FillValue = -2147483647 ;
 }

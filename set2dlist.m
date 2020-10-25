@@ -1,22 +1,14 @@
 %
-% set2dlist -- take 16-day set number to doy list
+%  set2dlist -- take AIRS 16-day set number to datenum list
 %
 
-function dlist = set2dlist(year, iset);
+function dlist = set2dlist(iset);
 
-if ~(1 <= iset & iset <= 23)
-  error(sprintf('iset = %g out of range\n', iset))
-end
+% AIRS 16-day set start date
+abase = datenum('1 sep 2002');
 
-if ~isleap(year) 
-  yend = 365; 
-else 
-  yend = 366; 
-end
+d1 = abase + (iset - 1) * 16;
+d2 = abase + (iset) * 16 - 1;
 
-dlist = (iset - 1) * 16 + 1 : iset * 16;
-
-if dlist(end) > yend
-  dlist = dlist(1) : yend;
-end
+dlist = d1 : d2;
 

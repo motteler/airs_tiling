@@ -29,14 +29,17 @@
 %   obs  - current obs index (from current granule)
 
 function write_buf(ilat, ilon, nlat, nlon, nchan, ...
-  latB, lonB, year, iset, do_init, thome, nc_init, ...
-  obs, rad, tai93, lat, lon, sat_zen, sol_zen, asc_flag, land_frac)
+  latB, lonB, iset, do_init, do_close, thome, nc_init, ...
+  rad, tai93, lat, lon, sat_zen, sol_zen, asc_flag, land_frac)
 
-% number of buffers
-nbuf = 120;
+%------------------
+% local parameters
+%------------------
 
-% buffer size
-bmax = 240; 
+bmax = 300;     % buffer size
+nbuf = 200;     % number of buffers
+verbose = 0;    % print lots of status messages
+do_checks = 0;  % do several buffer sanity checks
 
 %-----------------------------
 % set up persistent variables
@@ -45,7 +48,7 @@ bmax = 240;
 % persistent buffers, pointers, and tables
 persistent rad_b tai93_b lat_b lon_b sat_zen_b sol_zen_b 
 persistent asc_flag_b land_frac_b 
-persistent tile_buf tile_cnt buf_tile buf_cnt buf_age
+persistent tile_buf tile_cnt buf_tile buf_cnt buf_age call_cnt
 
 % initialize persistent data on first call
 if do_init
@@ -67,9 +70,35 @@ if do_init
   buf_tile = zeros(2,bmax);        % buffer tile indices
   buf_cnt = zeros(bmax, 1);        % buffer counts
   buf_age = zeros(bmax, 1);        % buffer age
+  call_cnt = 0;                    % call counter
 
   % buffer space summary
   fprintf(1, 'buffer space %.2f MB\n', nbuf*bmax*(nchan+8)*4 / 1e6 )
+end
+
+%---------------------------------------
+% option to write all buffers and return
+%----------------------------------------
+
+if do_close
+  fprintf(1, 'writing out all buffers...\n')
+
+  % find all non-empty buffers
+  for j = 1 : nbuf
+    if buf_cnt(j) > 0;
+      buf_msg(sprintf('closing buffer %d', j))
+      write_file(j);
+    end
+  end
+  % compare counts
+  tc = tile_cnt(:);
+  s1 = sum(tc(tc > 0));
+  if s1 == call_cnt
+    fprintf(1, 'call and write counts agree\n')
+  else
+    fprintf(1, 'call count %d, write count %d\n', call_cnt, s1)
+  end
+  return % all done
 end
 
 %-----------------------------------
@@ -94,7 +123,7 @@ if tile_buf(ilat, ilon) == 0
   end
   % if found, we have a buffer for the current tile
   if found
-    fprintf(1, 'found free buffer %d for tile %d %d\n', j, ilat, ilon)
+    buf_msg(sprintf('found free buffer %d for tile %d %d', j, ilat, ilon))
   end
 
   if ~found
@@ -108,8 +137,8 @@ if tile_buf(ilat, ilon) == 0
     end
     % iold is index of oldest buffer
     if iold == 0, error('could not find oldest buffer'), end
-    fprintf(1, 'aging out buffer %d for tile %d %d\n', ...
-                iold, buf_tile(1,iold), buf_tile(2,iold))
+    buf_msg(sprintf('aging out buffer %d for tile %d %d', ...
+                    iold, buf_tile(1,iold), buf_tile(2,iold)))
 
     % write out the old buffer
     write_file(iold);
@@ -131,8 +160,12 @@ end % if tile_buf(ilat, ilon) == 0
 % buf_id is our write buffer
 buf_id = tile_buf(ilat, ilon);
 
+% increment call counter
+call_cnt = call_cnt + 1;
+
 % at this point we have a valid tile/buffer pair
-fprintf(1, 'tile %d %d obs %d buffer %d\n', ilat, ilon, obs, buf_id)
+% buf_msg(sprintf('writing L1c obs %d to tile %d %d buffer %d...', ...
+%              call_cnt, ilat, ilon, buf_id))
 
 %---------------------------------
 % write the obs to the tile buffer
@@ -164,16 +197,18 @@ ix = buf_cnt > 0;
 buf_age(ix) = buf_age(ix) + 1;
 buf_age(buf_id) = 0;
 
-% buffer sanity check
-buffer_check
+% buffer sanity checks
+if do_checks
+  buffer_check
 
-% more buffer sanity check
-dLon = lonB(2)-lonB(1);
-[ilat2, ilon2] = tile_index(latB, dLon, lat, lon);
-if ilat2 ~= ilat | ilon2 ~= ilon
-  fprintf(1, 'lat/lon mismatch on buffer write\n')
-  fprintf(1, 'tile: %.2f %.2f  buffer %.2f %.2f\n', ...
-     latB(ilat), lonB(ilon), latB(ilat2), lonB(ilon2))
+  % more buffer sanity check
+  dLon = lonB(2)-lonB(1);
+  [ilat2, ilon2] = tile_index(latB, dLon, lat, lon);
+  if ilat2 ~= ilat | ilon2 ~= ilon
+    fprintf(1, 'lat/lon mismatch on buffer write\n')
+    fprintf(1, 'tile: %.2f %.2f  buffer %.2f %.2f\n', ...
+      latB(ilat), lonB(ilon), latB(ilat2), lonB(ilon2))
+  end
 end
 
 %-----------------------
@@ -195,7 +230,7 @@ jlat = buf_tile(1, iout);
 jlon = buf_tile(2, iout);
 
 % get the tile filename
-[tname, tpath] = tile_file(jlat, jlon, latB, lonB, year, iset);
+[tname, tpath] = tile_file(jlat, jlon, latB, lonB, iset);
 
 % full path to the tile
 tfull = fullfile(thome, tpath, tname);
@@ -214,36 +249,42 @@ if tile_cnt(jlat, jlon) == -1
   if ~exist(pfull)
     [s, w] = unix(sprintf('mkdir -p %s', pfull));
     if s ~= 0, error(sprintf('mkdir -p %s failed', pfull)), end
-    fprintf(1, 'creating tile path %s\n', tpath)
+    buf_msg(sprintf('creating tile path %s', tpath))
   end
 
   % copy the netcdf tile file template to the new file and update
   % tile_cnt to 0 (no obs written yet)
   copyfile(nc_init, tfull)
   tile_cnt(jlat, jlon) = 0;
-  fprintf(1, 'creating tile file %s\n', tname)
+  buf_msg(sprintf('creating tile file %s', tname))
 end
 
 jx = 1 : buf_cnt(iout);   % index span of values in buffer
 icount = length(jx);      % number of values to write to file
 istart = tile_cnt(jlat, jlon) + 1;  % write start in tile file
 
-fprintf(1, 'writing %d values from buffer %d to tile %d %d\n', ...
-            icount, iout, jlat, jlon)
+buf_msg(sprintf('writing %d values from buffer %d to tile %d %d', ...
+                icount, iout, jlat, jlon))
 
 % buffer sanity check
-dLon = lonB(2)-lonB(1);
-for j = jx
-  [ilat2, ilon2] = tile_index(latB, dLon, lat_b(j, iout), lon_b(j, iout));
-  if ilat2 ~= jlat | ilon2 ~= jlon
-    fprintf(1, 'lat/lon mismatch on file write\n')
-    fprintf(1, 'tile: %.2f %.2f  buffer %.2f %.2f\n', ...
-      latB(jlat), lonB(jlon), latB(ilat2), lonB(ilon2))
-%   keyboard
+if do_checks
+  dLon = lonB(2)-lonB(1);
+  for j = jx
+    [ilat2, ilon2] = tile_index(latB, dLon, lat_b(j, iout), lon_b(j, iout));
+    if ilat2 ~= jlat | ilon2 ~= jlon
+      buf_msg('lat/lon mismatch on file write')
+      buf_msg(sprintf('tile: %.2f %.2f  buffer %.2f %.2f', ...
+        latB(jlat), lonB(jlon), latB(ilat2), lonB(ilon2)))
+%     keyboard
+    end
   end
 end
 
-if exist(tfull) ~= 2, keyboard, end   % ****** test test test *****
+if exist(tfull) ~= 2
+  fprintf(1, 'can''t find tile file %s', tfull)
+  keyboard
+  error(sprintf('can''t find tile file %s', tfull))
+end
 
   h5write(tfull, '/rad', rad_b(:,jx, iout), [1,istart], [nchan,icount]);
   h5write(tfull, '/tai93',    tai93_b(jx, iout),   istart, icount);
@@ -253,13 +294,14 @@ if exist(tfull) ~= 2, keyboard, end   % ****** test test test *****
   h5write(tfull, '/sol_zen',  sol_zen_b(jx, iout), istart, icount);
   h5write(tfull, '/asc_flag', uint8(asc_flag_b(jx, iout)), istart, icount);
   h5write(tfull, '/land_frac', land_frac_b(jx, iout), istart, icount);
+  h5write(tfull, '/total_obs', int32(tile_cnt(jlat, jlon) + icount));
+
+% update the tile write counter
+tile_cnt(jlat, jlon) = tile_cnt(jlat, jlon) + icount;
 
 % reset the buffer count and age
 buf_cnt(iout) = 0;
 buf_age(iout) = 0;
-
-% update the tile write counter
-tile_cnt(jlat, jlon) = tile_cnt(jlat, jlon) + icount;
 
 end % function write_file
 
@@ -315,6 +357,17 @@ for i = 1 : nbuf
 end
 
 end % function buffer_check
+
+%------------------------
+% buffer status messages
+%------------------------
+function buf_msg(msg)
+
+if verbose
+  fprintf(1, '%s\n', msg)
+end
+
+end % function buf_msg
 
 end % function write_buf
 

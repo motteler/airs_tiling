@@ -3,18 +3,17 @@
 %   airsL1c2buf - AIRS buffered tiling main function
 %
 % SYNOPSIS
-%   airsL1c2buf(year, iset, thome)
+%   airsL1c2buf(iset, thome)
 %
 % INPUTS
-%   year   - integer year
-%   iset   - 16-day set number (1-23)
+%   iset   - 16-day set number
 %   thome  - output tree home
 %
 % AUTHOR
 %   H. Motteler, 10 Oct 2020
 %
 
-function airsL1c2buf(year, iset, thome)
+function airsL1c2buf(iset, thome)
 
 % this function name
 fstr = mfilename;  
@@ -42,30 +41,33 @@ nlon = length(lonB) - 1;
 
 % AIRS source 
 airs_home = '/asl/airs/l1c_v672';
-airs_year = fullfile(airs_home, sprintf('%d', year));
 
 % fixed AIRS parameters
-nchan = 2645;  % L1c channels
-nobs = 90 * 135;    % xtrack x atrack obs
+nchan = 2645;     % L1c channels
+nobs = 90 * 135;  % xtrack x atrack obs
 
 % get L1c channel indices
 ixv = 1 : nchan;
 d1 = load('airs_l1c_wnum');
 wnum = d1.wnum;
 
-% flag to initialize buffers
-do_init = true;
+% write_buf flags
+do_init = true;    % initialize buffers
+do_close = false;  % close all buffers
 
-% get dlist from 16-day set index
-dlist =  set2dlist(year, iset);
+% get datenums for this set
+dlist =  set2dlist(iset);
 
-% loop on days of the year
-for di = dlist
+% loop on datenums
+for dn = dlist
 
-  % add day-of-year to paths
-  doy = sprintf('%03d', di);
-  fprintf(1, '%s: processing %d doy %s\n', fstr, year, doy)
-  airs_dir = fullfile(airs_year, doy);
+  % get year and day-of-year
+  dvec = datevec(dn);
+  year = dvec(1);
+  doy = datenum(dn) - datenum(year, 1, 1) + 1;
+  fprintf(1, '%s: processing set %d year %d doy %d\n', ...
+    fstr, iset, year, doy)
+  airs_dir = fullfile(airs_home, sprintf('%d/%03d', year, doy));
 
   % check that the source path exists
   if exist(airs_dir) ~= 7
@@ -74,7 +76,8 @@ for di = dlist
   end
 
   % loop on AIRS granules
-  flist = dir(fullfile(airs_dir, 'AIRS*L1C*.hdf'));
+% flist = dir(fullfile(airs_dir, 'AIRS*L1C*.hdf'));
+  flist = airs_glist(airs_dir);
   for fi = 1 : length(flist);
 
     airs_l1c = flist(fi).name;
@@ -112,18 +115,20 @@ for di = dlist
     for j = 1 : nobs
 
       write_buf(ilat(j), ilon(j), nlat, nlon, nchan, ...
-        latB, lonB, year, iset, do_init, thome, nc_init, ...
-        j, rad(:,j), tai93(j), lat(j), lon(j), ...
+        latB, lonB, iset, do_init, do_close, thome, ...
+        nc_init, rad(:,j), tai93(j), lat(j), lon(j), ...
         sat_zen(j), sol_zen(j), asc_flag(j), land_frac(j))
 
       do_init = false;
 
-%     pause(0.1);  %** temporary ** 
-
     end % loop on obs
-
-    if mod(fi, 10) == 0, fprintf(1, '.'), end
   end % loop on granules
-  fprintf(1, '\n')
 end % loop on days
+
+% write out non-empty buffers and quit
+do_close = true;
+write_buf(ilat(j), ilon(j), nlat, nlon, nchan, ...
+  latB, lonB, iset, do_init, do_close, thome,  ...
+  nc_init, rad(:,j), tai93(j), lat(j), lon(j), ...
+  sat_zen(j), sol_zen(j), asc_flag(j), land_frac(j))
 
