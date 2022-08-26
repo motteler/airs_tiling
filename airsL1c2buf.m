@@ -14,9 +14,10 @@
 %   days, granules, and obs within a granule.  It calls write_buf
 %   for each obs.  write_buf saves the obs in one of a set buffers.
 %   When a buffer is full or has aged out due to not being used for
-%   a while, the values there are written to the appropriate tile
-%   file.  There are many more tiles than buffers, and as buffers
-%   age out they are assigned to new tiles.
+%   a while, the values are written to the associated tile file.
+%   There are many more tiles than buffers, and as buffers age out
+%   they are assigned to new tiles.
+
 %
 % AUTHOR
 %   H. Motteler, 10 Oct 2020
