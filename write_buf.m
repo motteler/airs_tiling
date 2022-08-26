@@ -45,14 +45,14 @@
 %     bmax |   |   |   |  ...  |   |
 %          -------------------------
 %
-%   The columns are tile buffers.  The buffers vary over time,
-%   and roughly follow the orbital swath.  The nlat x nlon array
-%   tile_buf takes you from tiles to their current buffers.  Rows
-%   (for a given column) are values for the currently associated
-%   tile.  When a buffer is full or has aged out due to not being
-%   used for a while, it is written to the associated tile file.
-%   There are many more tiles than buffers, and as buffers age out
-%   they are assigned to new tiles.
+%   Columns are tile buffers.  The association of columns with tiles
+%   varies over time, following the orbital swath.  The nlat x nlon
+%   array tile_buf takes you from tiles to their current buffers.
+%   Rows down a given column are buffered values for the currently
+%   associated tile.  When a buffer is full or has aged out due to
+%   not being used for a while, it is written to the associated tile
+%   file.  There are many more tiles than buffers, and as buffers
+%   age out they are assigned to new tiles.
 %
 
 function write_buf(ilat, ilon, nlat, nlon, nchan, ...

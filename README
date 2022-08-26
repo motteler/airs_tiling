@@ -3,13 +3,12 @@ Overview
 =========
 
 airs_tiling is a package to rearrange AIRS L1c obs from a global
-sequential format to a global tiling, in which each tile has all the
-obs that fall within its boundaries, grouped as 16-day sets, with
-data remaining in time order for each tile.
-
-An "obs" is an observed radiance spectra along with some basic
-support info--for the AIRS tiling this is time, lat, lon, satellite
-and solar zenith angles, land fraction, and an ascending flag.
+sequential format to a global tiling in which each tile has all the
+obs that fall within its boundaries, grouped as 16-day sets, in time
+order for each tile.  An "obs" is an observed radiance spectra along
+with some basic support info--for the AIRS tiling this is time, lat,
+lon, satellite and solar zenith angles, land fraction, and an
+ascending flag.
 
 The package includes support functions and demos that may be useful
 for user applications, an unbuffered tiling function (for very slow
@@ -30,8 +29,8 @@ AIRS tiling
   airsL1c2buf    - AIRS buffered tiling main function
   airs_tile_task - .m and .sh batch wrappers for airsL1c2buf
   uniform_bands  - uniform sampling for a polar orbiter
-  tile_index     - tile indices from lat/lon lists
-  tile_file      - name and path for tile files
+  tile_index     - tile file indices from lat/lon lists
+  tile_file      - tile file from lat, lon, and set indices
   set2dlist      - 16-day set number to datenum list
   setspan        - two 16-day set numbers spanning a year
 
@@ -76,9 +75,6 @@ well-defined for the tiles.  For example rad_qc should always be 2
 could be representative values or averages over values written to
 the tile, but I didn't do that.  Since there was some rush to get
 this going, as soon as the basic stuff looked OK, I just let it run.
-
-Notes
-======
 
 netCDF notes
 -------------
