@@ -1,12 +1,12 @@
 #!/bin/bash
 #
-# usage: sbatch --array=<set_list>%1 airs_tile_task.sh
+# usage: sbatch --array=<set_list>%1 comp_tile_task.sh
 #
-# <set_list> should count in ntasks steps, for example for ntasks=8,
-# sbatch --array=9,17,25,33,41%1 airs_tile_task.sh
+# <set_list> should count in ntasks steps, for example for ntasks=4,
+# sbatch --array=53,57,61,65,69,73,77%1 comp_tile_task.sh
 
 # sbatch options
-#SBATCH --job-name=airs_tile
+#SBATCH --job-name=comp_tile
 #SBATCH --partition=high_mem
 # #SBATCH --partition=batch
 # #SBATCH --constraint=lustre
@@ -21,12 +21,12 @@
 #SBATCH --time=14:00:00
 
 # bad node list
-# #SBATCH --exclude=cnode021
+# #SBATCH --exclude=cnode040
 
 # matlab options
 MATLAB=/usr/ebuild/software/MATLAB/2020a/bin/matlab
 MATOPT='-nojvm -nodisplay -nosplash'
 
-srun --output=tile_%A_%a_%t.out \
-   $MATLAB $MATOPT -r "airs_tile_task; exit"
+srun --output=comp_%A_%a_%t.out \
+   $MATLAB $MATOPT -r "comp_tile_task; exit"
 

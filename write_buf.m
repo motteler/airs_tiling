@@ -1,10 +1,17 @@
 %
-% write_buf - buffered write for tiles
+% NAME
+%   write_buf - buffered write for tiles
+%
+% SYNOPSIS
+%   write_buf(ilat, ilon, nlat, nlon, nchan, ...
+%      latB, lonB, iset, do_init, do_close, thome, nc_init, ...
+%      rad, tai93, lat, lon, sat_zen, sol_zen, asc_flag, land_frac)
 %
 % BUFFER PARAMETERS 
 %   bmax - max buffer size
 %   nbuf - number of buffers
 %
+% BUFFER DATA STRUCTURES
 %   tile_buf - nlat x nlon array of pointers to current tile buffer
 %     tile_buf = 0, no buffer for this tile
 %     tile_buf = k, 0 < k <= nbuf, buffer k is allocated to this tile
@@ -22,11 +29,31 @@
 %
 %   buf_age - nbuf vector, buffer age in write_buf calls
 %
-% INPUT VALUES
-%   ilat - lat index for current obs
-%   ilon - lon index for current obs
-%   buf_init - true if buffer has been initialized
-%   obs  - current obs index (from current granule)
+%   data buffers - an nchan x bmax x nbuf array for radiances, and a
+%   bmax x nbuf array for each of the other tile fields:
+%
+%            1   2   3    ...  nbuf
+%         -------------------------
+%       1  |   |   |   |  ...  |   |
+%          -------------------------
+%       2  |   |   |   |  ...  |   |
+%          -------------------------
+%       3  |   |   |   |  ...  |   | 
+%          -------------------------
+%       :  :   :   :   :  ...  :   :
+%          -------------------------
+%     bmax |   |   |   |  ...  |   |
+%          -------------------------
+%
+%   Columns are tile buffers.  The buffers associated with tiles
+%   vary over time.  The array nlat x nlon array tile_buf takes you
+%   from tiles to their current buffers.  Rows (for a given column)
+%   are values for the associated tile.  When a buffer is full or
+%   has aged out due to not being used for a while, the values there
+%   are written to the appropriate tile file.  There are many more
+%   tiles than buffers, and as buffers age out they are assigned to
+%   new tiles.
+%
 
 function write_buf(ilat, ilon, nlat, nlon, nchan, ...
   latB, lonB, iset, do_init, do_close, thome, nc_init, ...
@@ -94,6 +121,7 @@ if do_close
   tc = tile_cnt(:);
   s1 = sum(tc(tc > 0));
   if s1 == call_cnt
+    fprintf(1, 'wrote %d total obs\n', s1)
     fprintf(1, 'call and write counts agree\n')
   else
     fprintf(1, 'call count %d, write count %d\n', call_cnt, s1)
@@ -281,8 +309,8 @@ if do_checks
 end
 
 if exist(tfull) ~= 2
-  fprintf(1, 'can''t find tile file %s', tfull)
-  keyboard
+% fprintf(1, 'can''t find tile file %s', tfull)
+% keyboard
   error(sprintf('can''t find tile file %s', tfull))
 end
 

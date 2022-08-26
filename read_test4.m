@@ -1,5 +1,5 @@
 %
-% airs tiling read tests
+% read_test4 -- compare compressed and uncompressed tile
 %
 
 % set up source paths
@@ -22,15 +22,23 @@ nlon = length(lonB) - 1;
 thome = '/asl/isilon/airs/tile_test7';
 tpre = 'tile';
 
-iset = input('set > ');
+iset = 101
 lat = input('lat > ');
 lon = input('lon > ');
 [ilat, ilon, latB, lonB] = tile_index(latB, dLon, lat, lon);
 
 [tname, tpath] = tile_file(ilat, ilon, latB, lonB, iset, tpre);
 tfull = fullfile(thome, tpath, tname);
-d1 = read_netcdf_h5(tfull)
+d1 = read_netcdf_h5(tfull);
 k = d1.total_obs;
+
+tpath = strrep(tpath, '2007_s101', '2007_s101.bak');
+tfull = fullfile(thome, tpath, tname);
+d2 = read_netcdf_h5(tfull);
+
+isequal(d1, d2)
+
+return
 
 figure(1)
 subplot(3,1,1)

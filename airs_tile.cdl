@@ -1,6 +1,6 @@
 netcdf airs_tiling {
 dimensions:
-	obs = 12150 ;
+	obs = 11280 ;
 	wnum = 2645 ;
 variables:
 	double tai93(obs) ;

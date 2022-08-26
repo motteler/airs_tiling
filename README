@@ -3,10 +3,11 @@ Overview
 =========
 
 airs_tiling is a package to rearrange AIRS L1c obs from a global
-sequential format to a global tiling, in which each tile has all the
-sequential obs that fall within its boundaries, organized in 16-day
-sets.  It also includes functions to do mapped 16-day statistical
-summaries.
+sequential format to a global tiling, in which each tile has all
+the obs that fall within its boundaries, organized as 16-day sets.
+It also includes an unbuffered tiling function (for very slow tests
+of the buffering) and some functions to do tiled 16-day statistical
+summaries, predecessors to the all-channel tiling.
 
 Source Repos
 -------------
@@ -15,15 +16,38 @@ https://github.com/motteler/airs_tiling.git
 https://github.com/motteler/chirp_test.git
 https://github.com/strow/ccast.git
 
-
 Main Files
 ============
 
 AIRS tiling
 ------------
-  airsL1c2buf  - AIRS buffered tiling main function
-  tile_file    - name and path for tile files
-  write_buf    - buffered write for tiles
+  airsL1c2buf    - AIRS buffered tiling main function
+  airs_tile_task - .m and .sh batch wrappers for airsL1c2buf
+  uniform_bands  - uniform sampling for a polar orbiter
+  tile_index     - tile indices from lat/lon lists
+  tile_file      - name and path for tile files
+  set2dlist      - 16-day set number to datenum list
+  setspan        - two 16-day set numbers spanning a year
+
+support and test
+-----------------
+  write_buf     - buffered write for tile files
+  airs_glist    - clean up an AIRS L1c directory
+  airs_flat     - flatten an AIRS granule into lists
+  read_airs_h4  - read an AIRS HDF4 granule (from CHIRP repo)
+  read_test*    - several tile file checks
+  airsL1c2tile  - AIRS unbuffered tiling main function
+
+tile compression
+-----------------
+  comp_tiles     - compress and test a 16-day tile set
+  comp_tile_task - .m and .sh batch wrappers for comp_tiles
+
+key data files
+---------------
+  latB64.mat     - equal sample latitude bands
+  airs_tile.nc   - AIRS tile initial netCDF file
+  airs_tile.cdl  - AIRS tile netCDF data spec
 
 16-day stats
 -------------
@@ -31,10 +55,20 @@ AIRS tiling
   airs_sdr2obs    - obs lists from AIRS L1c subsets
   airs_sdr_batch  - batch wrapper for airs_sdr2tab and airs_sdr2obs
 
-test and support
------------------
-  airsL1c2tile - AIRS unbuffered tiling main function
+Data Format
+============
 
+wnum, nedn, chan_qc, rad_qc, and synth_frac are all just fill
+values, either NaNs or 9.9692e+36 for single and -1 for int8's,
+depending on the reader.  (netCDF calls swap fill values for NaNs,
+but return most variables as doubles.)  wnum and the other variables
+are defined in the CDL spec but never set in the code.  I should
+have filled in wnum, but most of the rest are either trivial or not
+well-defined for the tiles.  For example rad_qc should always be 2
+(OK) because I drop the obs where it is not.  NEdN and synth_frac
+could be representative values or averages over values written to
+the tile, but I didn't do that.  Since there was some rush to get
+this going, as soon as the basic stuff looked OK, I just let it run.
 
 Notes
 ======

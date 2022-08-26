@@ -9,20 +9,35 @@
 %   iset   - 16-day set number
 %   thome  - output tree home
 %
+% NOTES
+%   airsL1c2buf takes a 16-day set number and loops on the relevant
+%   days, granules, and obs within a granule.  It calls write_buf
+%   for each obs.  write_buf saves the obs in one of a set buffers.
+%   When a buffer is full or has aged out due to not being used for
+%   a while, the values there are written to the appropriate tile
+%   file.  There are many more tiles than buffers, and as buffers
+%   age out they are assigned to new tiles.
+%
 % AUTHOR
 %   H. Motteler, 10 Oct 2020
 %
+% EDITS
+%   1 Feb 2022: modified to change AIRS source directory after 
+%   the 23 Sep 2021 (doy 266) calibration shift
 
 function airsL1c2buf(iset, thome)
-
-% this function name
-fstr = mfilename;  
 
 % set up source paths
 addpath /home/motteler/shome/chirp_test
 addpath /home/motteler/cris/ccast/motmsc/utils
 addpath /home/motteler/cris/ccast/motmsc/time
 addpath /home/motteler/cris/ccast/source
+
+% start runtime clock
+tic  
+
+% this function name
+fstr = mfilename;
 
 % initial empty netCDF file
 nc_init = './airs_tile.nc';
@@ -40,7 +55,8 @@ lonB = -180 : dLon : 180;
 nlon = length(lonB) - 1;
 
 % AIRS source 
-airs_home = '/asl/airs/l1c_v672';
+airs_home1 = '/asl/airs/l1c_v672';  % before 23 Sep 2021
+airs_home2 = '/asl/airs/l1c_v674';  % after  23 Sep 2021
 
 % fixed AIRS parameters
 nchan = 2645;     % L1c channels
@@ -65,6 +81,14 @@ for dn = dlist
   dvec = datevec(dn);
   year = dvec(1);
   doy = datenum(dn) - datenum(year, 1, 1) + 1;
+
+  % fix for 23 Sep 2021 calibration shift
+  if year < 2021 | (year == 2021 & doy < 266)
+    airs_home = airs_home1;
+  else
+    airs_home = airs_home2;
+  end
+
   fprintf(1, '%s: processing set %d year %d doy %d\n', ...
     fstr, iset, year, doy)
   airs_dir = fullfile(airs_home, sprintf('%d/%03d', year, doy));
@@ -131,4 +155,7 @@ write_buf(ilat(j), ilon(j), nlat, nlon, nchan, ...
   latB, lonB, iset, do_init, do_close, thome,  ...
   nc_init, rad(:,j), tai93(j), lat(j), lon(j), ...
   sat_zen(j), sol_zen(j), asc_flag(j), land_frac(j))
+
+% report runtime
+fprintf(1, 'runtime %.2f hours\n', toc / 3600)
 

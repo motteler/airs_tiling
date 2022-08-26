@@ -158,16 +158,16 @@ d2.nedn = ntmp2;
 % QC summary checks
 radOK = sum(d2.rad_qc == 0);
 if radOK == 0
-  fprintf(1, '%s: no valid obs, skipping this granule...\n', fstr)
+  fprintf(1, '%s: granule %d no valid obs\n', gran_num, fstr)
   d2 = struct([]);
   return
 elseif radOK < nobs
-  fprintf(1, '%s: %d / %d valid obs\n', fstr, radOK, nobs)
+  fprintf(1, '%s: granule %d %d/%d valid obs\n', fstr, gran_num, radOK, nobs)
 end
 
 chanBAD = sum(d2.chan_qc == 2);
 if chanBAD == nchan
-  fprintf(1, '%s: no valid channels, skipping this granule...\n', fstr)
+  fprintf(1, '%s: granule %d no valid channels\n', gran_num, fstr)
   d2 = struct([]);
   return
 end

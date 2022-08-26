@@ -1,6 +1,10 @@
 %
 % airs tiling read tests
 %
+% tile_2007_s101_S68p25_W155p00.nc
+% 123456789012345678901234567890
+%          1         2         3
+%
 
 % set up source paths
 addpath /home/motteler/shome/chirp_test
@@ -22,13 +26,13 @@ nlon = length(lonB) - 1;
 thome = '/asl/isilon/airs/tile_test7';
 tpre = 'tile';
 
-iset = input('set > ');
-lat = input('lat > ');
-lon = input('lon > ');
-[ilat, ilon, latB, lonB] = tile_index(latB, dLon, lat, lon);
+% tile path from name
+tname = input('tname > ', 's');
+tset = tname(6:14);
+tdir = tname(16:21);
+tfull = fullfile(thome, tset, tdir, tname);
 
-[tname, tpath] = tile_file(ilat, ilon, latB, lonB, iset, tpre);
-tfull = fullfile(thome, tpath, tname);
+% read the data
 d1 = read_netcdf_h5(tfull)
 k = d1.total_obs;
 
