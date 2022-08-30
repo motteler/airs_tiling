@@ -6,9 +6,14 @@ airs_tiling is a package to rearrange AIRS L1c obs from a global
 sequential format to a global tiling in which each tile has all the
 obs that fall within its boundaries, grouped as 16-day sets, in time
 order for each tile.  An "obs" is an observed radiance spectra along
-with some basic support info--for the AIRS tiling this is time, lat,
-lon, satellite and solar zenith angles, land fraction, and an
-ascending flag.
+with some basic support info.  For the AIRS tiling the support info
+is time, lat, lon, satellite and solar zenith angles, land fraction,
+and an ascending flag.
+
+The tiling is a Mercator grid modified near the poles so that
+each tile gets approximately the same number of obs.  The uniform
+sampling is valuable in itself and allows for the tile files to be
+the same sized.  The current grid has 64 x 72 (nlat x nlon) tiles.
 
 The package includes support functions and demos that may be useful
 for user applications, an unbuffered tiling function (for very slow
