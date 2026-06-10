@@ -56,7 +56,10 @@ nlon = length(lonB) - 1;
 
 % AIRS source 
 airs_home1 = '/asl/airs/l1c_v672';  % before 23 Sep 2021
-airs_home2 = '/asl/airs/l1c_v674';  % after  23 Sep 2021
+airs_home2 = '/asl/airs/l1c_v674';  % starts 23 Sep 2021
+airs_home3 = '/asl/airs/l1c_v675';  % starts 2 Apr 2023
+dnum2 = datenum('23 Sep 2021');     
+dnum3 = datenum('2 Apr 2023');
 
 % fixed AIRS parameters
 nchan = 2645;     % L1c channels
@@ -82,11 +85,21 @@ for dn = dlist
   year = dvec(1);
   doy = datenum(dn) - datenum(year, 1, 1) + 1;
 
-  % fix for 23 Sep 2021 calibration shift
-  if year < 2021 | (year == 2021 & doy < 266)
+% % fix for 23 Sep 2021 calibration shift
+% if year < 2021 | (year == 2021 & doy < 266)
+%   display('first airs set')
+% else
+%   display('second airs set')
+% end
+
+  % fix for AIRS data set version changes
+  dcurr = datenum([year, 1, 1]) + doy - 1;
+  if dcurr < dnum2
     airs_home = airs_home1;
-  else
+  elseif dnum2 <= dcurr && dcurr < dnum3
     airs_home = airs_home2;
+  else
+    airs_home = airs_home3;
   end
 
   fprintf(1, '%s: processing set %d year %d doy %d\n', ...
